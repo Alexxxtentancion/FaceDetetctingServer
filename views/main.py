@@ -13,19 +13,14 @@ async def compare_images(request):
     data = await request.post()
     first_image = data['image1']
     second_image = data['image2']
-    first_filename = first_image.filename
-    second_filename = second_image.filename
-    first_data = first_image.file.read()
-    second_data = second_image.file.read()
-    # image = data['image'].file
-    # file = image.read()
-    with open(first_filename, 'wb') as f:
-        f.write(first_data)
-    with open(second_filename, 'wb') as f:
-        f.write(second_data)
+    with open(first_image.filename, 'wb') as f:
+        f.write(first_image.file.read())
+    with open(second_image.filename, 'wb') as f:
+        f.write(second_image.file.read())
 
-    first_face_descriptor = process_iamge(first_filename)
-    second_face_descriptor = process_iamge(second_filename)
+    sp, frm = request.app['sp'], request.app['frm']
+    first_face_descriptor = process_image(first_image.filename, sp, frm)
+    second_face_descriptor = process_image(second_image.filename, sp, frm)
     a = distance.euclidean(first_face_descriptor, second_face_descriptor)
     if a < 0.6:
         res = "Same"
@@ -34,9 +29,7 @@ async def compare_images(request):
     return json_response(data={'status': 'ok', 'data': res, 'distance': a}, status=200)
 
 
-def process_iamge(filename):
-    sp = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
-    facerec = dlib.face_recognition_model_v1('dlib_face_recognition_resnet_model_v1.dat')
+def process_image(filename, sp, frm):
     detector = dlib.get_frontal_face_detector()
     img = io.imread(filename)
     dets = detector(img, 1)
@@ -46,7 +39,6 @@ def process_iamge(filename):
             k, d.left(), d.top(), d.right(), d.bottom()))
     shape = sp(img, d)
 
-    face_descriptor = facerec.compute_face_descriptor(img, shape)
+    face_descriptor = frm.compute_face_descriptor(img, shape)
 
     return face_descriptor
-
