@@ -1,12 +1,14 @@
-import aiohttp
+import os
+
 import dlib
+
 from skimage import io
 from scipy.spatial import distance
 from aiohttp.web import json_response
 
 
 async def test(request):
-    return json_response(data={'status': 'ok'}, status=200)
+    return json_response(data={'status': 'ok'}, headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}, status=200)
 
 
 async def compare_images(request):
@@ -23,10 +25,10 @@ async def compare_images(request):
     second_face_descriptor = process_image(second_image.filename, sp, frm)
     a = distance.euclidean(first_face_descriptor, second_face_descriptor)
     if a < 0.6:
-        res = "Same"
+        res = 1
     else:
-        res = "Other"
-    return json_response(data={'status': 'ok', 'data': res, 'distance': a}, status=200)
+        res = 0
+    return json_response(data={'status': 'ok', 'data': res, 'distance': a},headers={'Access-Control-Allow-Origin': 'http://localhost:3000'}, status=200)
 
 
 def process_image(filename, sp, frm):
